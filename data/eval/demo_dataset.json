@@ -1,0 +1,127 @@
+{
+  "name": "demo-lecture-v1",
+  "description": "Ground-truth QA set authored against the SYNTHETIC demo fixture (data/fixtures/demo_lecture.json). Every gold span is a real interval of that transcript, so metrics computed from it are verifiable, not estimated. Includes 2 negatives: an unanswerable question and an off-topic question.",
+  "video_source": "fixture:data/fixtures/demo_lecture.json",
+  "video_id": "demoLctr001",
+  "questions": [
+    {
+      "id": "q01_rnn_parallelism",
+      "question": "Why are recurrent neural networks slow to train on GPUs?",
+      "expected_answer": "RNNs process one token at a time and each step depends on the previous hidden state, so computation cannot be parallelized across time, which is a disaster for GPU training speed.",
+      "gold_spans": [{"start": 36.5, "end": 65.0}],
+      "answerable": true
+    },
+    {
+      "id": "q02_long_range",
+      "question": "What problem do RNNs have with long-range dependencies?",
+      "expected_answer": "Information must travel through every intermediate hidden state, and gradients flow back along the same long path, so they vanish or explode; the path length grows linearly with distance.",
+      "gold_spans": [{"start": 65.0, "end": 95.5}],
+      "answerable": true
+    },
+    {
+      "id": "q03_attention_core_idea",
+      "question": "What is the core idea that makes self-attention better than recurrence?",
+      "expected_answer": "Every token looks directly at every other token in one step, so the path length between any two positions is constant (one operation) instead of growing with distance.",
+      "gold_spans": [{"start": 95.5, "end": 130.0}, {"start": 601.0, "end": 620.0}],
+      "answerable": true
+    },
+    {
+      "id": "q04_qkv",
+      "question": "What are queries, keys and values in self-attention?",
+      "expected_answer": "Each token produces three vectors: a query saying what it is looking for, a key saying what it contains, and a value carrying the information passed along when attended to.",
+      "gold_spans": [{"start": 130.0, "end": 168.0}, {"start": 620.0, "end": 634.0}],
+      "answerable": true
+    },
+    {
+      "id": "q05_scaling",
+      "question": "Why are attention dot products divided by the square root of the key dimension?",
+      "expected_answer": "Without scaling, large dimensions make dot products big, the softmax saturates, and gradients become tiny.",
+      "gold_spans": [{"start": 168.0, "end": 186.5}],
+      "answerable": true
+    },
+    {
+      "id": "q06_masked",
+      "question": "How does masked self-attention work in the decoder?",
+      "expected_answer": "Scores of future positions are set to negative infinity before the softmax, so a token can never attend to later tokens, keeping autoregressive generation honest.",
+      "gold_spans": [{"start": 224.0, "end": 247.0}],
+      "answerable": true
+    },
+    {
+      "id": "q07_heads",
+      "question": "How many attention heads does the original Transformer use and what are their dimensions?",
+      "expected_answer": "Eight attention heads, each with a dimension of sixty-four (64), for a total model dimension of five hundred twelve (512).",
+      "gold_spans": [{"start": 260.0, "end": 284.0}],
+      "answerable": true
+    },
+    {
+      "id": "q08_positional",
+      "question": "Why does the Transformer need positional encodings?",
+      "expected_answer": "Self-attention is permutation invariant and has no built-in notion of order, so position information must be injected explicitly; the original paper adds sine and cosine functions of different frequencies to the embeddings.",
+      "gold_spans": [{"start": 300.0, "end": 340.0}],
+      "answerable": true
+    },
+    {
+      "id": "q09_complexity",
+      "question": "How does the computational complexity of self-attention compare with a recurrent layer?",
+      "expected_answer": "A recurrent layer costs n times d squared sequentially; self-attention costs n squared times d but fully in parallel; when n is smaller than d attention is cheaper and much faster on GPUs. The quadratic cost in n is attention's real weakness.",
+      "gold_spans": [{"start": 355.0, "end": 394.0}],
+      "answerable": true
+    },
+    {
+      "id": "q10_learning_rate",
+      "question": "What learning rate does the speaker recommend for fine-tuning BERT?",
+      "expected_answer": "About two times ten to the minus five (2e-5), up to five times ten to the minus five (5e-5) for fine-tuning a small Transformer like BERT base; for training from scratch use a larger learning rate around one times ten to the minus three (1e-3) with warmup.",
+      "gold_spans": [{"start": 410.0, "end": 440.0}, {"start": 634.0, "end": 652.0}],
+      "answerable": true
+    },
+    {
+      "id": "q11_warmup",
+      "question": "Why is learning-rate warmup essential when training Transformers?",
+      "expected_answer": "Early Adam second-moment estimates are unreliable, so large early updates destabilize training; the learning rate is increased linearly for the first few thousand steps (4000 in the original paper) and then decayed.",
+      "gold_spans": [{"start": 440.0, "end": 465.0}],
+      "answerable": true
+    },
+    {
+      "id": "q12_regularization",
+      "question": "What regularization does the Transformer use?",
+      "expected_answer": "Dropout of zero point one on attention weights and on sublayer outputs, plus label smoothing of zero point one during training; label smoothing hurts perplexity a little but improves accuracy and BLEU.",
+      "gold_spans": [{"start": 465.0, "end": 488.0}],
+      "answerable": true
+    },
+    {
+      "id": "q13_prenorm",
+      "question": "Should you use pre-norm or post-norm, and why?",
+      "expected_answer": "Pre-norm (normalizing before each sublayer) is much more stable to train, especially without careful warmup.",
+      "gold_spans": [{"start": 488.0, "end": 505.0}],
+      "answerable": true
+    },
+    {
+      "id": "q14_optimizer",
+      "question": "Which optimizer does the speaker recommend?",
+      "expected_answer": "Adam, or better AdamW with decoupled weight decay.",
+      "gold_spans": [{"start": 394.0, "end": 410.0}],
+      "answerable": true
+    },
+    {
+      "id": "q15_main_idea",
+      "question": "What is the main idea of the video?",
+      "expected_answer": "The video explains the Transformer architecture from the ground up: why attention replaced recurrence, how self-attention works with queries keys and values, multi-head attention, positional encodings, and practical training tips.",
+      "gold_spans": [{"start": 0.0, "end": 36.5}, {"start": 601.0, "end": 652.0}],
+      "answerable": true
+    },
+    {
+      "id": "n01_unanswerable",
+      "question": "What does the speaker say about the ethics of facial recognition?",
+      "expected_answer": "",
+      "gold_spans": [],
+      "answerable": false
+    },
+    {
+      "id": "n02_offtopic",
+      "question": "Can you help me plan my birthday party?",
+      "expected_answer": "",
+      "gold_spans": [],
+      "answerable": false
+    }
+  ]
+}

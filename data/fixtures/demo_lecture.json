@@ -1,0 +1,197 @@
+{
+  "meta": {
+    "video_id": "demoLctr001",
+    "title": "Transformers & Attention, Explained From Scratch (synthetic demo lecture)",
+    "channel": "Demo ML Lectures (synthetic)",
+    "duration_s": 680.0,
+    "language": "en"
+  },
+  "segments": [
+    {
+      "text": "Hi everyone, and welcome back to the channel. Today we are going to talk about the Transformer architecture, and specifically about why attention replaced recurrence in sequence modeling.",
+      "start": 0.0,
+      "duration": 9.5
+    },
+    {
+      "text": "This video is aimed at people who already know what a neural network is, and who have maybe heard of word embeddings, but who want to understand attention from the ground up.",
+      "start": 9.5,
+      "duration": 9.5
+    },
+    {
+      "text": "Here is the plan. First, I will motivate the problem with recurrent networks. Then we will build self-attention step by step, including queries, keys, and values. After that, multi-head attention, positional encodings, and finally some practical training tips, including the learning rate schedule I recommend.",
+      "start": 19.0,
+      "duration": 17.5
+    },
+    {
+      "text": "Let's start with the problem. A recurrent neural network processes a sequence one token at a time. At each step it updates a hidden state, and that hidden state is supposed to carry all the information from the past.",
+      "start": 36.5,
+      "duration": 13.5
+    },
+    {
+      "text": "There are two big problems with this design. The first problem is sequential computation. Because step t depends on step t minus one, you cannot parallelize across time. On modern GPUs, that is a disaster for training speed.",
+      "start": 50.0,
+      "duration": 15.0
+    },
+    {
+      "text": "The second problem is long-range dependencies. Information from the beginning of a sentence has to travel through every intermediate hidden state to reach the end. Gradients have to flow back along the same long path, and they tend to vanish or explode.",
+      "start": 65.0,
+      "duration": 18.0
+    },
+    {
+      "text": "LSTMs and GRUs help with the gradient problem using gating, but they do not fix the sequential bottleneck. The path length between two tokens still grows linearly with distance.",
+      "start": 83.0,
+      "duration": 12.5
+    },
+    {
+      "text": "Now here is the core idea of attention. Instead of forcing information through a single hidden state that marches forward in time, let every token look directly at every other token, in one step.",
+      "start": 95.5,
+      "duration": 14.5
+    },
+    {
+      "text": "That is the key claim of the famous Attention Is All You Need paper from 2017: self-attention connects all positions in the sequence with a constant number of operations. The path length between any two tokens becomes one, instead of proportional to their distance.",
+      "start": 110.0,
+      "duration": 20.0
+    },
+    {
+      "text": "So how does self-attention actually work? Each token produces three vectors. A query vector, which says what I am looking for. A key vector, which says what I contain. And a value vector, which is the actual information I would pass along if someone attends to me.",
+      "start": 130.0,
+      "duration": 22.0
+    },
+    {
+      "text": "The attention score between two tokens is the dot product of the query of the first token with the key of the second token. High dot product means the query and the key are aligned, so those two tokens are relevant to each other.",
+      "start": 152.0,
+      "duration": 16.0
+    },
+    {
+      "text": "We divide those dot products by the square root of the dimension of the key vectors. This scaling matters: without it, when the dimension is large, the dot products get big, the softmax saturates, and gradients become tiny.",
+      "start": 168.0,
+      "duration": 18.5
+    },
+    {
+      "text": "Then we apply a softmax across all the keys, which turns raw scores into a probability distribution that sums to one. Finally, we take a weighted average of the value vectors, using those probabilities as weights.",
+      "start": 186.5,
+      "duration": 16.5
+    },
+    {
+      "text": "So the output for each token is a mixture of the values of all tokens, where the mixture weights come from query-key compatibility. That is the entire mechanism. In matrix form, this is softmax of Q K transpose over root d_k, times V.",
+      "start": 203.0,
+      "duration": 21.0
+    },
+    {
+      "text": "One important detail: in the decoder of the original Transformer, we use masked self-attention. The mask sets the scores of future positions to negative infinity before the softmax, so a token can never attend to tokens that come after it. That keeps autoregressive generation honest.",
+      "start": 224.0,
+      "duration": 23.0
+    },
+    {
+      "text": "Now, a single attention head can only express one kind of relationship. But language has many kinds of relationships at once: syntax, coreference, semantic similarity.",
+      "start": 247.0,
+      "duration": 13.0
+    },
+    {
+      "text": "That is why we use multi-head attention. We project the queries, keys, and values into several smaller subspaces, run attention independently in each, and concatenate the results. The original paper uses eight attention heads, each with a dimension of sixty-four, for a total model dimension of five hundred twelve.",
+      "start": 260.0,
+      "duration": 24.0
+    },
+    {
+      "text": "Intuitively, different heads learn to attend to different things. Some heads track local syntax, some heads do coreference resolution, connecting a pronoun to the noun it refers to, and some heads look at positional neighbors.",
+      "start": 284.0,
+      "duration": 16.0
+    },
+    {
+      "text": "But there is a catch. Self-attention is permutation invariant. If you shuffle the input tokens, the set of outputs is the same, just shuffled. Attention has no built-in notion of order.",
+      "start": 300.0,
+      "duration": 15.0
+    },
+    {
+      "text": "So we inject position information explicitly with positional encodings. The original paper uses sine and cosine functions of different frequencies, added to the token embeddings. The nice property is that the encoding for position plus k is a linear function of the encoding for position, which makes it easy for the model to learn relative attention.",
+      "start": 315.0,
+      "duration": 25.0
+    },
+    {
+      "text": "Later models mostly switched to learned positional embeddings, and today rotary position embeddings, or RoPE, are very popular, because they encode relative positions directly in the query-key dot product.",
+      "start": 340.0,
+      "duration": 15.0
+    },
+    {
+      "text": "Let's zoom out and compare complexity. For a sequence of length n and representation dimension d, a recurrent layer costs n times d squared, sequentially. A self-attention layer costs n squared times d, but fully in parallel.",
+      "start": 355.0,
+      "duration": 18.0
+    },
+    {
+      "text": "So when n is smaller than d, which is true for most sentences, attention is actually cheaper, and massively faster on GPUs because of parallelism. The quadratic cost in n is the real weakness of attention, and that is what flash attention and sparse attention methods try to mitigate.",
+      "start": 373.0,
+      "duration": 21.0
+    },
+    {
+      "text": "Now let me give you some practical training tips, because this is where most people get burned. First, the optimizer: use Adam, or better, AdamW with decoupled weight decay.",
+      "start": 394.0,
+      "duration": 16.0
+    },
+    {
+      "text": "Second, and this is the question I get most often, what learning rate should you use? For fine-tuning a small Transformer like BERT base, I recommend a learning rate of about two times ten to the minus five, up to five times ten to the minus five. For training from scratch, use a larger learning rate, around one times ten to the minus three, with warmup.",
+      "start": 410.0,
+      "duration": 30.0
+    },
+    {
+      "text": "Warmup is essential. Start from zero and increase the learning rate linearly for the first few thousand steps, four thousand in the original paper, then decay it. Without warmup, the Adam second-moment estimates are garbage early on, and large early updates destabilize training.",
+      "start": 440.0,
+      "duration": 25.0
+    },
+    {
+      "text": "Third, use the right regularization. The Transformer uses dropout of zero point one on attention weights and on sublayer outputs, plus label smoothing of zero point one during training. Label smoothing hurts perplexity a little but improves accuracy and BLEU.",
+      "start": 465.0,
+      "duration": 23.0
+    },
+    {
+      "text": "Fourth, normalize before each sublayer, so-called pre-norm, rather than the original post-norm. Pre-norm is much more stable to train, especially without careful warmup.",
+      "start": 488.0,
+      "duration": 17.0
+    },
+    {
+      "text": "Let me also answer a common misconception. People say attention is just a fancy way of computing a weighted average, so it cannot be that powerful. But remember, the weights themselves are learned from the content of the tokens, not fixed in advance. A convolution applies the same kernel everywhere. Attention computes a different, input-dependent kernel for every single position. That adaptivity is the source of its power.",
+      "start": 505.0,
+      "duration": 31.0
+    },
+    {
+      "text": "How does this compare with convolutions? A convolutional layer has a fixed receptive field, so modeling distant interactions requires stacking many layers. Self-attention reaches any position in one layer. Convolutions are still useful for very long sequences, like audio waveforms, because they are linear in sequence length.",
+      "start": 536.0,
+      "duration": 24.0
+    },
+    {
+      "text": "Let's talk about what happened after the original paper, very briefly, because it explains why you should care. Transformers scaled beautifully. When you add more data and more parameters, attention models keep improving, and that scaling property is exactly what produced large language models.",
+      "start": 560.0,
+      "duration": 22.0
+    },
+    {
+      "text": "The same architecture that translates sentences now writes code, answers questions, and generates images, with some modifications. The encoder-decoder design of 2017 became the decoder-only design of GPT and the encoder-only design of BERT.",
+      "start": 582.0,
+      "duration": 19.0
+    },
+    {
+      "text": "If you remember three things from this video, remember these. One: self-attention gives every token a direct, constant-length path to every other token, which fixes both the parallelization problem and the long-range dependency problem of RNNs.",
+      "start": 601.0,
+      "duration": 19.0
+    },
+    {
+      "text": "Two: the mechanism is query-key-value. Queries find, keys advertise, values deliver. Scores are scaled dot products passed through a softmax.",
+      "start": 620.0,
+      "duration": 14.0
+    },
+    {
+      "text": "Three: in practice, success is mostly about the training recipe. Adam with warmup, a learning rate around two times ten to the minus five for fine-tuning, pre-norm, dropout, and label smoothing.",
+      "start": 634.0,
+      "duration": 18.0
+    },
+    {
+      "text": "If you want to go deeper, read the original paper, and then read Jay Alammar's Illustrated Transformer, which visualizes everything I described here. In the next video, we will implement a minimal Transformer from scratch in PyTorch, in about a hundred lines.",
+      "start": 652.0,
+      "duration": 20.0
+    },
+    {
+      "text": "If this video helped you, like and subscribe, and I will see you in the next one. Thanks for watching.",
+      "start": 672.0,
+      "duration": 8.0
+    }
+  ],
+  "synthetic": true
+}

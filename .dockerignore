@@ -1,0 +1,16 @@
+.git
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.pytest_cache/
+data/cache/
+data/vectorstore/
+data/eval/reports/
+notebooks/
+*.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+.venv/

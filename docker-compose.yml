@@ -1,0 +1,45 @@
+services:
+  backend:
+    build: .
+    container_name: ytrag-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # secrets come from .env at the compose root — never bake them in
+      LLM_PROVIDER: ${LLM_PROVIDER:-groq}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-llama-3.3-70b-versatile}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-en-v1.5}
+      VECTORSTORE_BACKEND: ${VECTORSTORE_BACKEND:-chroma}
+      RETRIEVAL_MODE: ${RETRIEVAL_MODE:-hybrid}
+      RERANKER_ENABLED: ${RERANKER_ENABLED:-true}
+      MULTIMODAL_FRAMES: ${MULTIMODAL_FRAMES:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data                          # cache + chroma persist
+      - hf-cache:/home/user/.cache/huggingface    # model weights
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  frontend:
+    build: .
+    container_name: ytrag-frontend
+    command: streamlit run frontend/streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    ports:
+      - "8501:8501"
+    environment:
+      RAG_API_URL: http://backend:8000
+    volumes:
+      - ./data:/app/data
+      - hf-cache:/home/user/.cache/huggingface
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  hf-cache:
