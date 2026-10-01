@@ -57,7 +57,11 @@ def build_container(settings: Settings | None = None,
         persist_dir=str(settings.vectorstore_dir) if settings.chroma_persist else None,
     )
 
-    reranker = get_reranker(settings.reranker_enabled, settings.reranker_model)
+    reranker = get_reranker(
+        settings.reranker_enabled,
+        settings.reranker_model,
+        allow_fallback=False,
+    )
 
     retriever = RetrievalPipeline(
         store=store, embedder=embedder, reranker=reranker,
