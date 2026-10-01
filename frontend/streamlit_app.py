@@ -85,35 +85,22 @@ st.caption("Grounded Q&A over video transcripts — every answer cites clickable
 with st.container(border=True):
     col1, col2 = st.columns([4, 1])
     with col1:
-        url = st.text_input("YouTube URL (video or playlist)",
+        url = st.text_input("YouTube video URL",
                             placeholder="https://www.youtube.com/watch?v=...")
     with col2:
         st.write("")
-        as_playlist = st.checkbox("Playlist", value=False)
         process = st.button("Process", type="primary", use_container_width=True,
                             disabled=not url)
     if process:
         try:
-            if as_playlist:
-                with st.spinner("ingesting playlist (this can take a while)..."):
-                    res = api_post("/videos/process-playlist", {"url": url})
-                ok = [r for r in res["results"] if r.get("video")]
-                bad = [r for r in res["results"] if r.get("error")]
-                st.success(f"ingested {len(ok)}/{res['n_requested']} videos")
-                for r in bad:
-                    st.warning(r["error"][:200])
-                if ok:
-                    st.session_state["active_video"] = ok[0]["video"]["video_id"]
-                st.rerun()
-            else:
-                with st.spinner("extracting transcript → chunking → embedding..."):
-                    res = api_post("/videos/process", {"url": url})
-                v, cached = res["video"], res["cached"]
-                st.session_state["active_video"] = v["video_id"]
-                st.success(("loaded from cache" if cached else
-                            f"processed in {res['elapsed_s']}s") +
-                           f" — {v['n_chunks']} chunks")
-                st.rerun()
+            with st.spinner("extracting transcript → chunking → embedding..."):
+                res = api_post("/videos/process", {"url": url})
+            v, cached = res["video"], res["cached"]
+            st.session_state["active_video"] = v["video_id"]
+            st.success(("loaded from cache" if cached else
+                        f"processed in {res['elapsed_s']}s") +
+                       f" — {v['n_chunks']} chunks")
+            st.rerun()
         except Exception as e:
             st.error(str(e))
 

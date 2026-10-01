@@ -5,10 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.deps import get_container
 from app.ingestion.youtube_transcript import TranscriptUnavailableError
-from app.models.schemas import (Chunk, PlaylistItemResult,
-                                ProcessPlaylistRequest,
-                                ProcessPlaylistResponse, ProcessVideoRequest,
-                                ProcessVideoResponse, VideoMeta)
+from app.models.schemas import (
+    Chunk,
+    ProcessVideoRequest,
+    ProcessVideoResponse,
+    VideoMeta,
+)
 from app.services.container import Container
 from app.utils.youtube import InvalidYouTubeURLError
 
@@ -28,23 +30,6 @@ def process_video(req: ProcessVideoRequest,
     except TranscriptUnavailableError as e:
         raise HTTPException(status_code=422, detail=str(e))
     return ProcessVideoResponse(video=meta, cached=cached, elapsed_s=round(elapsed, 2))
-
-
-@router.post("/process-playlist", response_model=ProcessPlaylistResponse,
-             summary="Ingest every video of a playlist into the shared store")
-def process_playlist(req: ProcessPlaylistRequest,
-                     c: Container = Depends(get_container)) -> ProcessPlaylistResponse:
-    try:
-        raw = c.videos.process_playlist(req.url, language=req.language,
-                                        limit=req.limit, force=req.force)
-    except TranscriptUnavailableError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-    results = [
-        PlaylistItemResult(video=m, cached=cached, elapsed_s=round(el, 2))
-        if not isinstance(m, str) else PlaylistItemResult(error=m)
-        for m, cached, el in raw
-    ]
-    return ProcessPlaylistResponse(n_requested=len(results), results=results)
 
 
 @router.get("", response_model=list[VideoMeta], summary="List ingested videos")

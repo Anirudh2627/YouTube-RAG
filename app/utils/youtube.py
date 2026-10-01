@@ -57,9 +57,3 @@ def watch_url(video_id: str, t_seconds: int | None = None) -> str:
         url += f"&t={int(t_seconds)}s"
     return url
 
-
-def playlist_id(url: str) -> str | None:
-    """Extract `list=` playlist id from a URL, if present."""
-    parsed = urlparse(url if "://" in url else f"https://{url}")
-    lst = parse_qs(parsed.query).get("list", [None])[0]
-    return lst

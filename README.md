@@ -225,11 +225,10 @@ Nothing ever loads a full transcript into the LLM. A 3-hour lecture becomes
 (`data/cache/<video_id>/`) + persistent Chroma means each video is ingested
 exactly once.
 
-### 12. Multiple videos & playlists
-`POST /videos/process-playlist` ingests a playlist into the **shared** store;
-chatting with `video_id: null` searches the whole collection, so “compare the
-approaches in these three videos” works, with per-source video attribution in
-citations.
+### 12. Multiple videos
+Ingest videos individually into the **shared** store; chatting with
+`video_id: null` searches the whole collection, so “compare the approaches in
+these three videos” works, with per-source video attribution in citations.
 
 ## Technical decisions & tradeoffs
 
@@ -324,8 +323,7 @@ Interactive docs: **http://localhost:8000/docs**
 
 | Method & path | Purpose |
 |---|---|
-| `POST /videos/process` | ingest `{url, language?, force?, chunk_strategy?}` → `{video, cached, elapsed_s}` (also accepts `fixture:<path>` and playlists via `process-playlist`) |
-| `POST /videos/process-playlist` | `{url, limit≤50}` → per-video results, failures isolated |
+| `POST /videos/process` | ingest `{url, language?, force?, chunk_strategy?}` → `{video, cached, elapsed_s}` (also accepts `fixture:<path>`) |
 | `GET /videos` | ingested library |
 | `GET /videos/{video_id}` | metadata (title, channel, duration, n_chunks…) |
 | `GET /videos/{video_id}/sources` | every stored chunk with timestamps |

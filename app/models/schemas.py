@@ -129,25 +129,6 @@ class ProcessVideoRequest(BaseModel):
     language: str | None = Field(None, description="Transcript language code, e.g. 'en'")
     force: bool = Field(False, description="Re-ingest even if cached")
 
-class ProcessPlaylistRequest(BaseModel):
-    url: str = Field(..., description="YouTube playlist URL")
-    language: str | None = None
-    limit: int = Field(20, ge=1, le=50, description="Max videos to ingest")
-    force: bool = False
-
-
-class PlaylistItemResult(BaseModel):
-    video: VideoMeta | None = None
-    error: str | None = None
-    cached: bool = False
-    elapsed_s: float = 0.0
-
-
-class ProcessPlaylistResponse(BaseModel):
-    n_requested: int
-    results: list[PlaylistItemResult]
-
-
 class ProcessVideoResponse(BaseModel):
     video: VideoMeta
     cached: bool

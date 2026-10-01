@@ -196,31 +196,3 @@ class VideoService:
         if self.on_ingested:
             self.on_ingested(video_id)
         return meta is not None
-
-    # ------------------------------------------------------------ playlists
-    def playlist_video_ids(self, playlist_url: str, limit: int = 20) -> list[str]:
-        """Enumerate video ids in a playlist via yt-dlp (flat, no download)."""
-        import subprocess
-        proc = subprocess.run(
-            ["yt-dlp", "--flat-playlist", "--print", "id", "--no-warnings",
-             "--playlist-items", f"1:{limit}", playlist_url],
-            capture_output=True, text=True, timeout=120)
-        if proc.returncode != 0:
-            raise TranscriptUnavailableError(
-                f"Could not enumerate playlist: {proc.stderr[:200]}")
-        return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
-
-    def process_playlist(self, playlist_url: str, language: str | None = "en",
-                         limit: int = 20,
-                         force: bool = False) -> list[tuple[VideoMeta | str, bool, float]]:
-        """Ingest every video of a playlist into the shared store.
-        Failures on individual videos are returned as error strings so one
-        broken video doesn't kill the batch."""
-        out: list[tuple[VideoMeta | str, bool, float]] = []
-        for vid in self.playlist_video_ids(playlist_url, limit):
-            try:
-                out.append(self.process(vid, language=language, force=force))
-            except Exception as e:
-                log.warning("playlist item %s failed: %s", vid, e)
-                out.append((f"{vid}: {e}", False, 0.0))
-        return out

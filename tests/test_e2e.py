@@ -100,12 +100,3 @@ def test_evaluation_harness_runs(container, tmp_path):
     # a config snapshot is recorded for reproducibility
     assert report.config["embedder"] == "hashing"
 
-
-def test_playlist_ingestion(container, monkeypatch):
-    """process_playlist ingests each id; per-item failures don't kill the batch."""
-    monkeypatch.setattr(container.videos, "playlist_video_ids",
-                        lambda url, limit=20: [FIXTURE_URL])
-    results = container.videos.process_playlist("https://www.youtube.com/playlist?list=PLfake")
-    assert len(results) == 1
-    meta, cached, _ = results[0]
-    assert meta.video_id == "demoLctr001"

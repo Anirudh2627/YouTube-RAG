@@ -1,7 +1,6 @@
 import pytest
 
-from app.utils.youtube import (InvalidYouTubeURLError, extract_video_id,
-                               playlist_id, watch_url)
+from app.utils.youtube import InvalidYouTubeURLError, extract_video_id, watch_url
 
 VALID = "dQw4w9WgXcQ"
 
@@ -36,8 +35,3 @@ def test_watch_url():
     assert watch_url(VALID) == f"https://www.youtube.com/watch?v={VALID}"
     assert watch_url(VALID, 763) == f"https://www.youtube.com/watch?v={VALID}&t=763s"
 
-
-def test_playlist_id():
-    assert playlist_id("https://www.youtube.com/playlist?list=PLabc") == "PLabc"
-    assert playlist_id(f"https://www.youtube.com/watch?v={VALID}&list=PLxyz") == "PLxyz"
-    assert playlist_id(f"https://youtu.be/{VALID}") is None
