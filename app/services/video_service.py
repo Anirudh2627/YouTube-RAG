@@ -89,7 +89,7 @@ class VideoService:
     # ------------------------------------------------------------------
     def process(self, url_or_path: str, language: str | None = "en",
                 force: bool = False,
-                chunk_strategy: str | None = None) -> tuple[VideoMeta, bool, float]:
+                ) -> tuple[VideoMeta, bool, float]:
         """Returns (meta, cached, elapsed_seconds)."""
         t0 = time.perf_counter()
 
@@ -135,25 +135,14 @@ class VideoService:
 
         # ---- clean → chunk → embed → store
         segments = clean_segments(result.segments)
-        strategy = chunk_strategy or self.settings.chunk_strategy
         chunker = get_chunker(
-            strategy,
-            target_tokens=self.settings.chunk_target_tokens,
-            max_tokens=self.settings.chunk_max_tokens,
-            overlap_tokens=self.settings.chunk_overlap_tokens,
-        )
+        target_tokens=self.settings.chunk_target_tokens,
+        max_tokens=self.settings.chunk_max_tokens,
+        overlap_tokens=self.settings.chunk_overlap_tokens,
+)
         chunks = chunker.chunk(segments, meta)
         if not chunks:
             raise TranscriptUnavailableError(f"Chunking produced nothing for {video_id}")
-
-        # ---- optional multimodal: one keyframe per chunk (needs ffmpeg)
-        if self.settings.multimodal_frames:
-            try:
-                from app.multimodal.frames import FrameExtractor
-                FrameExtractor(self.settings.cache_dir).attach_frames(
-                    meta.video_id, chunks)
-            except Exception as e:
-                log.warning("frame extraction skipped: %s", e)
 
         log.info("embedding %d chunks for %s ...", len(chunks), meta.video_id)
         vectors = self.embedder.embed([c.text for c in chunks])

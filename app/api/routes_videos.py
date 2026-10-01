@@ -22,7 +22,6 @@ def process_video(req: ProcessVideoRequest,
     try:
         meta, cached, elapsed = c.videos.process(
             req.url, language=req.language, force=req.force,
-            chunk_strategy=req.chunk_strategy,
         )
     except InvalidYouTubeURLError as e:
         raise HTTPException(status_code=400, detail=str(e))

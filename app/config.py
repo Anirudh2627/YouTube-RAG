@@ -7,6 +7,7 @@ here so components stay replaceable without touching call sites.
 from __future__ import annotations
 
 from functools import lru_cache
+from importlib import import_module
 from pathlib import Path
 from typing import Literal
 
@@ -52,7 +53,6 @@ class Settings(BaseSettings):
     chunk_target_tokens: int = 160
     chunk_max_tokens: int = 240
     chunk_overlap_tokens: int = 40
-    chunk_strategy: Literal["timestamp", "sentence", "token"] = "timestamp"
 
     # -------------------------------------------------------------------- LLM
     llm_provider: Literal["groq", "openai-compatible", "mock"] = "groq"
@@ -72,7 +72,6 @@ class Settings(BaseSettings):
     conversation_ttl_minutes: int = 120
 
     # ------------------------------------------------------------------- misc
-    multimodal_frames: bool = False    # extract 1 keyframe per chunk (needs ffmpeg)
     debug: bool = True
     log_level: str = "INFO"
 

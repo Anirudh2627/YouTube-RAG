@@ -96,7 +96,7 @@ class Source(BaseModel):
     url: str = ""
     timestamp_label: str = ""
     score: float | None = None
-    frame_path: str | None = None      # multimodal: keyframe for this moment
+    frame_path: str | None = None      # keyframe for this moment
 
     @classmethod
     def from_scored(cls, sc: ScoredChunk) -> "Source":
@@ -128,8 +128,6 @@ class ProcessVideoRequest(BaseModel):
     url: str = Field(..., description="YouTube video URL or bare video id")
     language: str | None = Field(None, description="Transcript language code, e.g. 'en'")
     force: bool = Field(False, description="Re-ingest even if cached")
-    chunk_strategy: Literal["timestamp", "sentence", "token"] | None = None
-
 
 class ProcessPlaylistRequest(BaseModel):
     url: str = Field(..., description="YouTube playlist URL")
