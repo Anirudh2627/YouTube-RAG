@@ -33,26 +33,67 @@ class Reranker(ABC):
 class CrossEncoderReranker(Reranker):
     name = "cross-encoder"
 
-    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
-                 max_len: int = 512):
+    def __init__(
+        self,
+        model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        max_len: int = 512,
+        stage1_weight: float = 0.10,
+    ):
         from sentence_transformers import CrossEncoder
+
         self._model = CrossEncoder(model_name, max_length=max_len)
         self.model_name = model_name
+        self.stage1_weight = stage1_weight
         log.info("loaded reranker %s", model_name)
 
-    def rerank(self, query: str, candidates: list[ScoredChunk],
-               top_n: int) -> list[ScoredChunk]:
+    def rerank(
+        self,
+        query: str,
+        candidates: list[ScoredChunk],
+        top_n: int,
+    ) -> list[ScoredChunk]:
         if not candidates:
             return []
+
         pairs = [(query, sc.text[:2000]) for sc in candidates]
         logits = self._model.predict(pairs, show_progress_bar=False)
-        # sigmoid → interpretable 0..1 relevance probability
+
         import math
+
+        # Cross-encoder relevance score.
+        cross_scores = []
         for sc, logit in zip(candidates, logits):
-            sc.rerank_score = round(1.0 / (1.0 + math.exp(-float(logit))), 6)
-        ranked = sorted(candidates, key=lambda s: s.rerank_score or 0.0, reverse=True)
+            score = 1.0 / (1.0 + math.exp(-float(logit)))
+            sc.rerank_score = round(score, 6)
+            cross_scores.append(score)
+
+        # Preserve some information from stage-1 retrieval.
+        # Rank-based prior is deliberately used instead of mixing raw
+        # vector/BM25/RRF scores because those scores have different scales.
+        n = len(candidates)
+        for i, sc in enumerate(candidates):
+            stage1_prior = 1.0 if n == 1 else 1.0 - (i / (n - 1))
+
+            cross_score = cross_scores[i]
+
+            combined_score = (
+                (1.0 - self.stage1_weight) * cross_score
+                + self.stage1_weight * stage1_prior
+            )
+
+            # Keep the cross-encoder score for debugging/API output,
+            # while using the combined score only for final ordering.
+            sc._combined_rerank_score = combined_score
+
+        ranked = sorted(
+            candidates,
+            key=lambda s: s._combined_rerank_score,
+            reverse=True,
+        )
+
         for i, sc in enumerate(ranked[:top_n]):
             sc.final_rank = i + 1
+
         return ranked[:top_n]
 
 

@@ -46,3 +46,34 @@ def test_cross_encoder_reranker():
                    cands, top_n=2)
     assert out[0].chunk.chunk_id == "good"
     assert out[0].rerank_score > out[1].rerank_score
+
+
+def test_cross_encoder_preserves_strong_stage1_candidates():
+    from app.retrieval.reranker import CrossEncoderReranker
+
+    reranker = object.__new__(CrossEncoderReranker)
+    reranker.stage1_weight = 0.10
+
+    class FakeModel:
+        def predict(self, pairs, show_progress_bar=False):
+            # Cross-encoder prefers candidate 3,
+            # while stage-1 strongly preferred candidate 1.
+            return [-2.0, -3.0, 2.0]
+
+    reranker._model = FakeModel()
+
+    candidates = [
+        sc("c1", "Important explanation of the MLP architecture.", 0.90),
+        sc("c2", "Some unrelated information.", 0.50),
+        sc("c3", "Another unrelated section.", 0.10),
+    ]
+
+    result = reranker.rerank(
+        "What is the MLP architecture?",
+        candidates,
+        top_n=2,
+    )
+
+    assert len(result) == 2
+    assert result[0].chunk.chunk_id == "c3"
+    assert result[0].final_rank == 1
