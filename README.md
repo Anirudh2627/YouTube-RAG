@@ -31,8 +31,7 @@ AI:    For fine-tuning a small Transformer like BERT base, the speaker
 10. [Project structure](#project-structure)
 11. [Testing](#testing)
 12. [Docker](#docker)
-13. [Multimodal frames (experimental)](#multimodal-frames-experimental)
-14. [Limitations & future work](#limitations--future-work)
+13. [Limitations & future work](#limitations--future-work)
 
 ---
 
@@ -64,7 +63,7 @@ A retrieval-augmented generation pipeline that indexes the transcript once and a
                         └────────────────────────────────────────────────────────────────────────────────┘
 
                         ┌──────────────────────────────── QUERY PATH ────────────────────────────────────┐
- question + history ──▶ QueryRewriter (LLM, heuristic fallback) ──▶ standalone query
+ question + history ──▶ QueryRewriter (heuristic) ──▶ standalone query
                               ▼
                    Stage 1: hybrid retrieval               vector top-K (K=15) ┐
                                                            BM25 top-K          ┴─▶ RRF fusion
@@ -77,7 +76,7 @@ A retrieval-augmented generation pipeline that indexes the transcript once and a
                               ▼
                    Citation post-processing                [Cn] → [12:43](watch?v=…&t=763s) · sources list
                               ▼
-                   Answer + clickable timestamps (+ optional keyframe per source)
+                   Answer + clickable timestamps
                         └────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -153,10 +152,8 @@ Timestamps are never touched — cleaning must not shift the timeline.
 - maps every sentence back to the timeline via **char→time interpolation** inside each caption segment, so sub-segment timestamps stay accurate;
 - merges sub-`min_tokens` tail fragments backwards (no 3-word orphan chunks).
 
-Two ablation strategies ship behind the same interface: `SentenceChunker`
-(global sentence packing) and `FixedTokenChunker` (the naive baseline we
-measure against in `notebooks/`). Each chunk carries
-`chunk_id, video_id, video_url, title, start_time, end_time, index, text`.
+Each chunk carries `chunk_id, video_id, video_url, title, start_time, end_time,
+index, text`.
 
 ### 4. Embeddings (`app/embeddings/`)
 Default `BAAI/bge-small-en-v1.5` (384-d, strong MTEB for its size; swap to
@@ -168,7 +165,7 @@ dot product. A deterministic `HashingEmbedder` exists **for CI only**.
 `VectorStore` ABC + two backends: **Chroma** (persistent, cosine HNSW,
 precomputed embeddings — the DB never owns the embedding decision) and an
 in-memory numpy store (tests, tiny deployments). The app only touches the
-ABC, so Qdrant/FAISS/pgvector are one new class + one config value away.
+ABC, so additional backends can be added behind the `VectorStore` ABC.
 `video_id` metadata filtering gives per-video scoping *and* collection-wide
 cross-video retrieval from a single store.
 
@@ -236,7 +233,7 @@ these three videos” works, with per-source video attribution in citations.
 |---|---|---|
 | Hand-rolled BM25, RRF, metrics | ~60 lines each; keeps fusion logic inspectable & tunable | no exotic BM25 variants (BM25F, field weights) |
 | LangChain/LlamaIndex **not** used | every stage is a small ABC; frameworks would hide exactly the parts worth understanding | re-implemented a few commodity glue pieces |
-| Chroma embedded (no server) | zero-ops persistence, cosine HNSW, metadata filters | single-node scale; Qdrant/pgvector swap path documented via `VectorStore` ABC |
+| Chroma embedded (no server) | zero-ops persistence, cosine HNSW, metadata filters | single-node scale; additional backends can be added behind the `VectorStore` ABC |
 | Groq via raw OpenAI-compatible httpx | one client for Groq/OpenAI/Ollama/vLLM; timeouts+retries observable | no streaming yet (see future work) |
 | BGE-small default | best quality/latency/size ratio for CPU; `-base` is a config flip | 384-d misses a little vs large models |
 | Cross-encoder rerank on 15 candidates | measured P@1 +13pts, MRR +8pts (below) | +50–150 ms CPU per query |
@@ -284,13 +281,6 @@ deterministic `HeuristicJudge`), so treat these as a **conservative floor**:
 | citation_accuracy | 0.84 | cited spans ∩ gold spans (precision + coverage) |
 | refusal_accuracy | **1.00** | both negatives correctly refused/redirected, zero hallucinated answers |
 
-**LLM-as-a-judge**: `--judge llm` swaps in a rubric-scored LLM judge (same
-four axes, JSON output, temperature 0). Its limitations, documented rather
-than hidden: self-preference bias (judging Groq answers with a Groq model),
-verbosity/position sensitivity, coarse calibration (0.7 vs 0.75 is noise),
-and residual non-determinism. That's why the deterministic metrics remain
-the regression gate and the LLM judge is the qualitative overlay.
-
 Reproduce everything:
 
 ```bash
@@ -323,7 +313,7 @@ Interactive docs: **http://localhost:8000/docs**
 
 | Method & path | Purpose |
 |---|---|
-| `POST /videos/process` | ingest `{url, language?, force?, chunk_strategy?}` → `{video, cached, elapsed_s}` (also accepts `fixture:<path>`) |
+| `POST /videos/process` | ingest `{url, language?, force?}` → `{video, cached, elapsed_s}` (also accepts `fixture:<path>`) |
 | `GET /videos` | ingested library |
 | `GET /videos/{video_id}` | metadata (title, channel, duration, n_chunks…) |
 | `GET /videos/{video_id}/sources` | every stored chunk with timestamps |
@@ -360,9 +350,7 @@ Everything via env / `.env` (see `.env.example`). Highlights:
 | `RETRIEVAL_MODE` | `hybrid` | `vector` \| `bm25` \| `hybrid` |
 | `RETRIEVAL_TOP_K` / `RERANK_TOP_N` | `15` / `4` | the funnel widths |
 | `RERANKER_MODEL` | `ms-marco-MiniLM-L-6-v2` | e.g. `BAAI/bge-reranker-base` for more accuracy |
-| `CHUNK_STRATEGY` | `timestamp` | `timestamp` \| `sentence` \| `token` |
 | `CHUNK_TARGET_TOKENS` / `_MAX_` / `_OVERLAP_` | `160/240/40` | chunk budget |
-| `MULTIMODAL_FRAMES` | `false` | keyframe per chunk (needs ffmpeg) |
 | `YTDLP_COOKIES_FILE` | — | cookies for IP-blocked environments |
 
 ## Project structure
@@ -378,13 +366,12 @@ youtube-rag/
 │   ├── generation/     # LLM ABC, OpenAI-compat client, mock, prompts, rewriter, RAG engine
 │   ├── memory/         # TTL conversation store
 │   ├── services/       # VideoService (ingest+cache), Container (composition root)
-│   ├── multimodal/     # optional keyframe extraction (ffmpeg)
-│   ├── evaluation/     # metrics, judges (heuristic + LLM), runner/reports
+│   ├── evaluation/     # metrics, deterministic evaluation judge, runner/reports
 │   ├── models/         # shared Pydantic schemas (== API schemas)
 │   └── utils/          # youtube URLs, timefmt, text cleaning, logging, stemming
 ├── frontend/streamlit_app.py     # thin UI over the HTTP API
 ├── scripts/            # ingest.py · chat.py · evaluate.py · make_demo_fixture.py
-├── tests/              # 132 tests, offline by default (-m "not slow")
+├── tests/              # pytest suite, offline by default
 ├── notebooks/          # chunking & retrieval ablations
 ├── data/               # fixtures · eval dataset · reports · cache · vectorstore
 ├── Dockerfile · docker-compose.yml · Makefile · .env.example
@@ -402,11 +389,11 @@ chunker invariants (coverage, monotonicity, overlap, no micro-fragments,
 metadata), embedder determinism, both vector-store backends incl. upsert/
 filter/persistence, BM25 ranking, RRF fusion math, rerankers, retrieval
 pipeline (gold-span hits, video scoping, cache invalidation), rewriter
-(gating, LLM/heuristic/fallback paths), citation rendering (incl.
+(gating, heuristic path), citation rendering (incl.
 out-of-range markers), engine behavior (grounding, refusal, off-topic,
 follow-up rewriting, debug trace), all API endpoints (incl. 400/404/422),
-metric formulas vs hand-computed values, judges, multimodal degradation,
-playlist batching, and two end-to-end journeys.
+metric formulas vs hand-computed values, deterministic evaluation,
+and two end-to-end journeys.
 
 ## Docker
 
@@ -418,19 +405,6 @@ docker compose up --build     # backend :8000 + Streamlit :8501
 - Model weights cached in a named volume (`hf-cache`) — downloaded once.
 - `./data` bind-mount persists Chroma + the per-video cache across restarts.
 - Secrets flow from `.env` → compose `environment:` — never baked into images.
-- ffmpeg included so `MULTIMODAL_FRAMES=true` works out of the box.
-
-## Multimodal frames (experimental)
-
-With `MULTIMODAL_FRAMES=true` (and ffmpeg + yt-dlp on PATH), ingestion grabs
-**one keyframe per chunk** (chunk midpoint, ≤360p, direct seek — no full
-download) and stores its path in chunk metadata. Frames surface in `sources`
-(`frame_path`), so the UI can show *the slide on screen at [4:13]* next to
-each citation, and the API returns them for downstream use. Retrieval stays
-transcript-based; visual-content search (CLIP over frames, slide dedup) is
-documented future work. The feature degrades silently to text-only when
-tools or network are unavailable (tested).
-
 ## Demo
 
 Offline (no keys, no network) terminal session — real output:
@@ -453,10 +427,9 @@ video card, chat, sources with clickable timestamps, debug expander).
 - Datacenter IPs are often blocked by YouTube; cookies file supported as workaround.
 - No answer streaming yet; the UI waits for the full completion.
 - Evaluation dataset is one synthetic video (17 Qs) — enough to regression-gate the pipeline, not enough to claim generalization; extend with real-video QA pairs.
-- The heuristic faithfulness judge is lexical; paraphrased-but-faithful answers are under-scored (use `--judge llm`).
+- The heuristic faithfulness judge is lexical; paraphrased-but-faithful answers can be under-scored.
 
 **Roadmap:**
-- Multimodal retrieval proper: CLIP-embed keyframes, slide-dedup, “show me the architecture diagram” queries.
 - Streaming responses (SSE) + websocket debug trace.
 - Query routing/agentic retrieval (multi-hop: retrieve → reason → re-retrieve).
 - Better rerankers (`bge-reranker-v2-m3`), optional ColBERT-style late interaction.
@@ -468,7 +441,7 @@ video card, chat, sources with clickable timestamps, debug expander).
 
 ### Reproducibility checklist
 
-- `make test` — 132 tests, deterministic offline core.
+- `make test` — deterministic offline test suite.
 - `make eval` / `make eval-ci` — regenerate every number in this README.
 - Reports carry the full config snapshot + per-question traces.
 - Pinned fallbacks (mock LLM, hashing embedder, memory store) keep CI honest without network or keys.
