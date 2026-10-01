@@ -201,5 +201,5 @@ def save_report(report: EvalReport, out_dir: str | Path, tag: str = "") -> tuple
                   f"citation-acc {j.get('citation_accuracy')}")
         md.append(f"- answer: {qr['answer'][:300]}")
         md.append("")
-    mpath.write_text("\n".join(md))
+    mpath.write_text("\n".join(md), encoding="utf-8")
     return jpath, mpath
