@@ -7,7 +7,6 @@ here so components stay replaceable without touching call sites.
 from __future__ import annotations
 
 from functools import lru_cache
-from importlib import import_module
 from pathlib import Path
 from typing import Literal
 
