@@ -8,10 +8,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# ffmpeg: only needed for the optional multimodal frame extraction
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.txt .
 # CPU-only torch wheel first (the default wheel bundles CUDA and is ~2.5GB)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
