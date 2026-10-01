@@ -83,21 +83,8 @@ def build_container(settings: Settings | None = None,
         timeout_s=settings.llm_timeout_s,
     )
 
-    # Rewriter gets a cheap LLM only when a key exists; else heuristic-only.
-    rewriter_llm = None
-    if settings.rewriter_enabled and settings.llm_api_key and settings.llm_provider != "mock":
-        try:
-            rewriter_llm = get_llm(
-                settings.llm_provider, settings.rewriter_model,
-                api_key=settings.llm_api_key,
-                base_url=settings.llm_base_url_resolved,
-                temperature=0.0, max_tokens=80, timeout_s=20.0,
-            )
-        except Exception as e:
-            log.warning("rewriter LLM unavailable: %s", e)
-
     conversations = ConversationStore(ttl_minutes=settings.conversation_ttl_minutes)
-    rewriter = QueryRewriter(llm=rewriter_llm, enabled=settings.rewriter_enabled,
+    rewriter = QueryRewriter(enabled=settings.rewriter_enabled,
                              max_history_turns=settings.history_turns_for_rewrite)
     engine = RAGEngine(retriever=retriever, llm=llm, conversations=conversations,
                        rewriter=rewriter)

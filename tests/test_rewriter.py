@@ -13,68 +13,79 @@ def hist():
 def test_needs_rewrite_detection():
     assert needs_rewrite("Why is it useful?", hist())
     assert needs_rewrite("how does that work", hist())
-    assert not needs_rewrite("What learning rate is recommended for BERT fine-tuning?", hist())
-    assert not needs_rewrite("Why is it useful?", [])       # no history
+    assert not needs_rewrite(
+        "What learning rate is recommended for BERT fine-tuning?",
+        hist(),
+    )
+    assert not needs_rewrite("Why is it useful?", [])
 
 
 def test_heuristic_rewrite_includes_topic():
-    rw = QueryRewriter(llm=None, enabled=True)
+    rw = QueryRewriter(enabled=True)
+
     out, method = rw.rewrite("Why is it useful?", hist())
+
     assert method == "heuristic"
     assert "attention mechanism" in out.lower()
 
 
 def test_passthrough_when_standalone():
-    rw = QueryRewriter(llm=None, enabled=True)
+    rw = QueryRewriter(enabled=True)
+
     q = "What learning rate does the speaker recommend?"
+
     out, method = rw.rewrite(q, hist())
-    assert out == q and method is None
+
+    assert out == q
+    assert method is None
 
 
 def test_disabled_rewriter():
-    rw = QueryRewriter(llm=None, enabled=False)
+    rw = QueryRewriter(enabled=False)
+
     out, method = rw.rewrite("Why is it useful?", hist())
-    assert out == "Why is it useful?" and method is None
+
+    assert out == "Why is it useful?"
+    assert method is None
 
 
-class FakeLLM:
-    model = "fake"
-    name = "fake"
+def test_heuristic_rewrite_uses_recent_history():
+    history = [
+        ConversationTurn(role="user", content="What is gradient descent?"),
+        ConversationTurn(role="assistant", content="It is an optimization algorithm."),
+        ConversationTurn(role="user", content="What is a learning rate?"),
+        ConversationTurn(role="assistant", content="It controls the step size."),
+    ]
 
-    def __init__(self, response="Why is the attention mechanism useful?"):
-        self.response = response
-        self.calls = []
+    rw = QueryRewriter(enabled=True, max_history_turns=4)
 
-    def complete(self, messages, temperature=None, max_tokens=None):
-        self.calls.append(messages)
-        return self.response
+    out, method = rw.rewrite("Why is it important?", history)
 
-
-def test_llm_rewrite_used_when_available():
-    llm = FakeLLM()
-    rw = QueryRewriter(llm=llm, enabled=True)
-    out, method = rw.rewrite("Why is it useful?", hist())
-    assert method == "llm"
-    assert out == "Why is the attention mechanism useful?"
-    # prompt contains the history and the new question
-    joined = str(llm.calls[0])
-    assert "attention mechanism" in joined and "Why is it useful?" in joined
+    assert method == "heuristic"
+    assert "learning rate" in out.lower()
 
 
-def test_llm_rewrite_failure_falls_back():
-    class BrokenLLM(FakeLLM):
-        def complete(self, *a, **k):
-            raise RuntimeError("boom")
-    rw = QueryRewriter(llm=BrokenLLM(), enabled=True)
-    out, method = rw.rewrite("Why is it useful?", hist())
+def test_heuristic_rewrite_truncates_long_topic():
+    long_question = (
+        "Can you explain how gradient descent works in neural networks "
+        "including learning rates momentum regularization and convergence?"
+    )
+
+    history = [
+        ConversationTurn(role="user", content=long_question),
+        ConversationTurn(role="assistant", content="Explanation..."),
+    ]
+
+    rw = QueryRewriter(enabled=True)
+
+    out, method = rw.rewrite("Why?", history)
+
     assert method == "heuristic"
 
+    topic = long_question.rstrip("?").split()
+    expected_topic = " ".join(topic[:20])
 
-def test_llm_rewrite_garbage_guard():
-    llm = FakeLLM(response="x")  # too short → guard rejects
-    rw = QueryRewriter(llm=llm, enabled=True)
-    out, method = rw.rewrite("Why is it useful?", hist())
-    assert out == "Why is it useful?"   # passthrough, method still 'llm'
+    assert expected_topic in out
 
 
 def test_message_helpers():

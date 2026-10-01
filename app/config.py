@@ -63,8 +63,6 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 1024
     llm_timeout_s: float = 60.0
 
-    # Small/cheap model used for query rewriting (can equal the main model).
-    rewriter_model: str = "llama-3.1-8b-instant"
     rewriter_enabled: bool = True
 
     # ----------------------------------------------------------- conversation
