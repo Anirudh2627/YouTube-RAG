@@ -1,10 +1,3 @@
-"""OpenAI-compatible chat-completions client over plain httpx.
-
-One implementation serves Groq (https://api.groq.com/openai/v1), OpenAI,
-Together, Ollama, vLLM, LM Studio — anything speaking the OpenAI chat API.
-No vendor SDK: the wire protocol is trivial and owning the HTTP call makes
-timeouts/retries observable and testable.
-"""
 from __future__ import annotations
 
 import httpx
@@ -41,7 +34,7 @@ class OpenAICompatLLM(LLM):
             headers={"Authorization": f"Bearer {api_key}"},
         )
 
-    # ------------------------------------------------------------------
+    
     def complete(self, messages: list[dict], temperature: float | None = None,
                  max_tokens: int | None = None) -> str:
         payload = {

@@ -1,11 +1,3 @@
-"""Evaluation runner: retrieval + generation metrics over a QA dataset.
-
-Produces honest, reproducible numbers:
-  * every retrieval score is computed from actual vector-store results
-  * every generation score comes from an actual judge over actual answers
-  * the full config + per-question detail is written into the report, so
-    any number in the README can be re-derived with one command.
-"""
 from __future__ import annotations
 
 import json
@@ -94,7 +86,7 @@ def run_evaluation(
         gold = [GoldItem(video_id=meta.video_id, start=g["start"], end=g["end"])
                 for g in q.get("gold_spans", [])]
 
-        # -------- retrieval (answerable questions only)
+        # retrieval (answerable questions only)
         if qr.answerable and gold:
             n_rel_corpus = sum(
                 chunk_is_relevant(c.start_time, c.end_time, gold, meta.video_id)
@@ -110,7 +102,7 @@ def run_evaluation(
             stage1_rel.append((relevance_vector(spans1, gold), n_rel_corpus))
             stage2_rel.append((relevance_vector(spans2, gold), n_rel_corpus))
 
-        # -------- generation (all questions, incl. negatives)
+        # generation (all questions, incl. negatives)
         resp = container.engine.answer(q["question"], video_id=meta.video_id)
         qr.answer = resp.answer
 
@@ -140,7 +132,7 @@ def run_evaluation(
         log.info("  %s → correct=%.2f faithful=%.2f cit=%.2f", q["id"],
                  sc.answer_correctness, sc.faithfulness, sc.citation_accuracy)
 
-    # -------- aggregate
+    #aggregate
     ks = (1, 3, 5, 10)
     m1 = aggregate(stage1_rel, ks)
     m2 = aggregate(stage2_rel, ks)

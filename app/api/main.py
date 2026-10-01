@@ -1,8 +1,4 @@
-"""FastAPI application factory.
 
-Run with:  uvicorn app.api.main:app --reload
-Interactive docs at /docs (Swagger) and /redoc.
-"""
 from __future__ import annotations
 
 from fastapi import FastAPI

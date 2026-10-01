@@ -1,12 +1,9 @@
-"""LLM provider interface + factory."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
 
 class Message(dict):
-    """Convenience wrapper: Message.user("hi") / Message.system("...")"""
-
     @staticmethod
     def system(content: str) -> dict:
         return {"role": "system", "content": content}

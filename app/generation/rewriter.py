@@ -1,5 +1,4 @@
-"""Query rewriting for context-dependent follow-up questions.
-
+"""
 The rewriter converts short follow-up questions into retrieval-friendly
 queries using the previous user question as context.
 

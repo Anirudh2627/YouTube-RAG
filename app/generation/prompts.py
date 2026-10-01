@@ -1,13 +1,3 @@
-"""Prompt templates for grounded generation and query rewriting.
-
-Grounding rules baked into the system prompt:
-  1. Answer ONLY from the provided transcript context.
-  2. Cite every claim with [Cn] markers matching the context blocks.
-  3. Refuse with an exact sentence when the context is insufficient.
-  4. Redirect off-topic questions politely.
-The refusal sentence is a fixed string so the API/UI (and the evaluation
-harness) can detect refusals reliably.
-"""
 from __future__ import annotations
 
 from app.models.schemas import ScoredChunk
@@ -51,7 +41,6 @@ verbatim. Output ONLY the rewritten query — no explanations, no quotes."""
 
 def build_context_block(scored_chunks: list[ScoredChunk],
                         max_chars_per_chunk: int = 1600) -> str:
-    """Render retrieved chunks as numbered, timestamped context blocks."""
     parts = []
     for i, sc in enumerate(scored_chunks, start=1):
         c = sc.chunk

@@ -1,13 +1,4 @@
-"""Retrieval metrics: Recall@K, Precision@K, MRR, nDCG@K.
 
-Relevance is *interval-based*: a retrieved chunk counts as relevant to a
-question when its [start_time, end_time] span overlaps any gold interval of
-that question (a question may legitimately be answered in several places,
-e.g. the explanation AND the summary).
-
-Implemented from scratch (they're each a few lines) so their exact
-definitions are inspectable — see the README for formulas.
-"""
 from __future__ import annotations
 
 import math
@@ -38,7 +29,7 @@ def relevance_vector(ranked_spans: list[tuple[float, float, str]],
     return [int(chunk_is_relevant(s, e, gold, vid)) for s, e, vid in ranked_spans]
 
 
-# -------------------------------------------------------------------- metrics
+# metrics
 
 def precision_at_k(rel: list[int], k: int) -> float:
     top = rel[:k]

@@ -1,12 +1,3 @@
-"""Deterministic hashing embedder — for tests and offline CI only.
-
-Maps bag-of-words (unigrams + bigrams) through a stable hash into a fixed
-dimensional space, then L2-normalizes. Semantically weak (no synonymy), but
-*exact keyword overlap* still yields high cosine similarity, which is enough
-to exercise retrieval plumbing deterministically without downloading models.
-
-Never use this in production: set EMBEDDING_PROVIDER=sentence-transformers.
-"""
 from __future__ import annotations
 
 import hashlib

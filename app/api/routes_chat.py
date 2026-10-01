@@ -1,4 +1,3 @@
-"""Chat endpoint: grounded Q&A over ingested video(s)."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException

@@ -1,19 +1,4 @@
-"""Deterministic offline LLM for tests, CI, and key-less demos.
 
-It is *extractive*, not generative: it selects the sentences from the
-provided context that best match the query (IDF-weighted token overlap, so
-rare informative words dominate common ones) and stitches them into an
-answer with [Cn] citation markers. Selected sentences are extended by one
-following sentence, because narration usually states a topic and then
-substantiates it.
-
-This exercises the whole pipeline end-to-end (prompt construction → citation
-parsing → grounding behavior) without a network call, and it can never
-hallucinate beyond the context — the failure mode real LLMs have.
-
-It also implements the refusal and off-topic behaviors from the system
-prompt so those paths are testable too.
-"""
 from __future__ import annotations
 
 import math
@@ -108,7 +93,6 @@ class MockLLM(LLM):
             return " ".join(f"{w} {mk}" for w, mk in parts)
 
         # nothing matched: "topic present but answer absent" → refusal;
-        # no lexical connection at all → off-topic
         if raw_best >= 0.12:
             return REFUSAL
         return OFF_TOPIC

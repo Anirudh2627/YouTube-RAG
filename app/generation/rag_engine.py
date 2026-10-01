@@ -1,15 +1,3 @@
-"""The RAG engine: end-to-end query orchestration.
-
-    query → QueryRewriter → RetrievalPipeline → context blocks → LLM
-          → citation post-processing → ChatResponse (+ DebugTrace)
-
-Citation handling is deliberately two-layered:
-  * The LLM writes [C1]-style markers next to claims (cheap, verifiable).
-  * `render_citations` maps each marker to a real timestamped YouTube URL.
-    Markers pointing outside the provided sources are dropped, and any
-    unused source is still listed under "Relevant sections" — so the UI can
-    always render clickable timestamps even if the model forgets a marker.
-"""
 from __future__ import annotations
 
 import re
@@ -46,7 +34,6 @@ class RAGEngine:
         self.include_history_in_prompt = include_history_in_prompt
         self.last_generation_failed = False
 
-    # ------------------------------------------------------------------
     def answer(self, query: str, video_id: str | None = None,
                conversation_id: str | None = None,
                top_k: int | None = None, top_n: int | None = None,
@@ -59,31 +46,31 @@ class RAGEngine:
         conv_id = conversation_id or self.conversations.create_id()
         history = self.conversations.get(conv_id)
 
-        # ---- 1. query rewriting (follow-up → standalone)
+        # 1. query rewriting (follow-up → standalone)
         t = time.perf_counter()
         rewritten, rewrite_method = self.rewriter.rewrite(query, history)
         timings["rewrite"] = (time.perf_counter() - t) * 1000
 
-        # ---- 2. retrieval
+        # 2. retrieval
         result = self.retriever.retrieve(rewritten, video_id=video_id,
                                          top_k=top_k, top_n=top_n)
         final_chunks = result.final[: self.max_context_chunks]
         timings.update(result.timings_ms)
 
-        # ---- 3. grounded generation
+        # 3. grounded generation
         t = time.perf_counter()
         sources = [Source.from_scored(sc) for sc in final_chunks]
         answer = self._generate(query, rewritten, final_chunks, history, timings)
         timings["llm"] = (time.perf_counter() - t) * 1000
         timings["total"] = (time.perf_counter() - t0) * 1000
 
-        # ---- 4. citations → clickable timestamps
+        # 4. citations → clickable timestamps
         answer_md, cited = render_citations(answer, sources)
         sources_md = render_sources_section(sources, cited)
         if sources_md:
             answer_md = f"{answer_md}\n\n{sources_md}"
 
-        # ---- 5. persist turn (store the clean answer, not the markdown)
+        # 5. persist turn (store the clean answer, not the markdown)
         self.conversations.append(conv_id, ConversationTurn(role="user", content=query))
         self.conversations.append(conv_id, ConversationTurn(role="assistant",
                                                             content=strip_markers(answer)))
@@ -109,7 +96,6 @@ class RAGEngine:
             )
         return resp
 
-    # ------------------------------------------------------------------
     def _generate(self, query: str, rewritten: str,
                   chunks: list[ScoredChunk],
                   history: list[ConversationTurn],
@@ -132,7 +118,7 @@ class RAGEngine:
             return REFUSAL_SENTENCE
 
 
-# ------------------------------------------------------------ citation utils
+#  citation utils
 
 def strip_markers(text: str) -> str:
     """Remove [Cn] markers, tidy the whitespace they leave behind."""

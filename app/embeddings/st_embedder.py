@@ -1,12 +1,4 @@
-"""Real embeddings via sentence-transformers.
 
-Default model: BAAI/bge-small-en-v1.5 (384-dim, strong MTEB performance for
-its size). Configurable to bge-base-en-v1.5, all-MiniLM-L6-v2, etc.
-
-BGE models recommend prefixing *queries* with an instruction for retrieval
-("Represent this sentence for searching relevant passages:"). We apply it in
-`embed_query` only — documents get no prefix, matching the model card.
-"""
 from __future__ import annotations
 
 import numpy as np

@@ -1,12 +1,3 @@
-"""Deterministic generation evaluation for the RAG system.
-
-The heuristic judge is offline and reproducible. It evaluates:
-- answer correctness
-- faithfulness
-- context relevance
-- citation accuracy
-"""
-
 from __future__ import annotations
 
 import re
@@ -168,7 +159,6 @@ class HeuristicJudge(Judge):
         answer: str,
         context: list[tuple[str, float, float, str]],
     ) -> float:
-        """Measure how many answer sentences are supported by context."""
 
         context_tokens = [
             set(tokenize(text))
@@ -204,7 +194,6 @@ class HeuristicJudge(Judge):
 
     @staticmethod
     def _context_relevance(ji: JudgeInput) -> float:
-        """Measure how many retrieved chunks overlap with the question."""
 
         if not ji.context_chunks:
             return 0.0
@@ -230,7 +219,6 @@ class HeuristicJudge(Judge):
 
     @staticmethod
     def _citation_accuracy(ji: JudgeInput) -> float:
-        """Average citation precision and citation coverage."""
 
         if not ji.gold:
             return 1.0 if not ji.cited_spans else 0.0

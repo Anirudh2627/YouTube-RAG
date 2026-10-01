@@ -7,7 +7,6 @@ import numpy as np
 
 
 class Embedder(ABC):
-    """Encodes text to L2-normalized float32 vectors (cosine-ready)."""
 
     dim: int
     model_name: str
