@@ -13,7 +13,6 @@ services:
       VECTORSTORE_BACKEND: ${VECTORSTORE_BACKEND:-chroma}
       RETRIEVAL_MODE: ${RETRIEVAL_MODE:-hybrid}
       RERANKER_ENABLED: ${RERANKER_ENABLED:-true}
-      MULTIMODAL_FRAMES: ${MULTIMODAL_FRAMES:-false}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       - ./data:/app/data                          # cache + chroma persist
