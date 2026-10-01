@@ -39,11 +39,8 @@ class Container:
     extras: dict[str, Any] = field(default_factory=dict)
 
 
-def build_container(settings: Settings | None = None,
-                    lazy_llm: bool = False) -> Container:
-    """Construct the full pipeline. Heavy components (embedding model,
-    cross-encoder) load on first construction; `lazy_llm=True` defers real
-    LLM instantiation until an API key exists (falls back to mock)."""
+def build_container(settings: Settings | None = None) -> Container:
+    """Construct the full pipeline. Heavy components load on construction."""
     settings = settings or get_settings()
     setup_logging(settings.log_level)
 
