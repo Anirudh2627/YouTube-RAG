@@ -31,6 +31,7 @@ class QuestionResult:
     retrieved_spans: list[tuple[float, float]] = field(default_factory=list)   # stage 1
     final_spans: list[tuple[float, float]] = field(default_factory=list)       # stage 2
     answer: str = ""
+    generation_status: str = "ok"
     cited_spans: list[tuple[float, float, str]] = field(default_factory=list)
     judge: dict[str, Any] = field(default_factory=dict)
 
@@ -112,6 +113,14 @@ def run_evaluation(
         # -------- generation (all questions, incl. negatives)
         resp = container.engine.answer(q["question"], video_id=meta.video_id)
         qr.answer = resp.answer
+
+        if container.engine.last_generation_failed:
+            qr.generation_status = "error"
+            qr.judge = {"error": "LLM generation failed"}
+            per_q_results.append(qr)
+            log.warning("  %s → generation error; excluded from generation metrics", q["id"])
+            continue
+
         qr.cited_spans = [(s.start_time, s.end_time, s.video_id)
                           for i, s in enumerate(resp.sources) if i in resp.cited_indices]
         ji = JudgeInput(

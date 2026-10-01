@@ -44,12 +44,14 @@ class RAGEngine:
         self.rewriter = rewriter or QueryRewriter(llm=None, enabled=False)
         self.max_context_chunks = max_context_chunks
         self.include_history_in_prompt = include_history_in_prompt
+        self.last_generation_failed = False
 
     # ------------------------------------------------------------------
     def answer(self, query: str, video_id: str | None = None,
                conversation_id: str | None = None,
                top_k: int | None = None, top_n: int | None = None,
                debug: bool = False) -> ChatResponse:
+        self.last_generation_failed = False
         timings: dict[str, float] = {}
         t0 = time.perf_counter()
 
@@ -125,6 +127,7 @@ class RAGEngine:
         try:
             return self.llm.complete(messages)
         except Exception as e:
+            self.last_generation_failed = True
             log.error("LLM generation failed: %s", e)
             return REFUSAL_SENTENCE
 
