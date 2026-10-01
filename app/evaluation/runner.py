@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.evaluation.judges import HeuristicJudge, Judge, JudgeInput, LLMJudge
+from app.evaluation.judges import HeuristicJudge, Judge, JudgeInput
 from app.evaluation.metrics import (GoldItem, aggregate, chunk_is_relevant,
                                     relevance_vector)
 from app.services.container import Container
@@ -62,10 +62,12 @@ class EvalReport:
         return "\n".join(lines)
 
 
-def run_evaluation(container: Container, dataset_path: str | Path,
-                   judge: Judge | None = None,
-                   eval_llm_judge: bool = False,
-                   top_k: int = 10) -> EvalReport:
+def run_evaluation(
+    container: Container,
+    dataset_path: str | Path,
+    judge: Judge | None = None,
+    top_k: int = 10,
+) -> EvalReport:
     dataset_path = Path(dataset_path)
     ds = json.loads(dataset_path.read_text())
     video_source = ds["video_source"]
@@ -78,10 +80,7 @@ def run_evaluation(container: Container, dataset_path: str | Path,
 
     # ---- judge selection
     if judge is None:
-        if eval_llm_judge and container.settings.llm_api_key:
-            judge = LLMJudge(container.llm)
-        else:
-            judge = HeuristicJudge()
+        judge = HeuristicJudge()
 
     per_q_results: list[QuestionResult] = []
     stage1_rel: list[tuple[list[int], int]] = []
