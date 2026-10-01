@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------- LLM
     llm_provider: Literal["groq", "openai-compatible", "mock"] = "groq"
     llm_api_key: str | None = None
-    llm_model: str = "llama-3.3-70b-versatile"
+    llm_model: str = "openai/gpt-oss-120b"
     llm_base_url: str | None = None    # override for OpenAI-compatible servers
     llm_temperature: float = 0.1
     llm_max_tokens: int = 1024

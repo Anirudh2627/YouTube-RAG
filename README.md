@@ -343,7 +343,7 @@ Everything via env / `.env` (see `.env.example`). Highlights:
 |---|---|---|
 | `LLM_PROVIDER` | `groq` | `groq` \| `openai-compatible` \| `mock` |
 | `LLM_API_KEY` | — | **never committed**; without it the app boots in offline mock mode |
-| `LLM_MODEL` | `llama-3.3-70b-versatile` | any Groq model |
+| `LLM_MODEL` | `openai/gpt-oss-120b` | any Groq model |
 | `LLM_BASE_URL` | Groq's | point at OpenAI/Ollama/vLLM/Together |
 | `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | any sentence-transformers model |
 | `VECTORSTORE_BACKEND` | `chroma` | `chroma` \| `memory` |
