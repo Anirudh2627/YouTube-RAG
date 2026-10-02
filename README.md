@@ -1967,7 +1967,7 @@ The evaluation therefore provides evidence for why the second-stage reranker exi
 
 ---
 
-# 🧪 Generation Evaluation
+#  Generation Evaluation
 
 The latest successful generation aggregate recorded:
 
@@ -2012,7 +2012,7 @@ That is exactly the kind of distinction the evaluation harness is designed to ex
 
 ---
 
-# 📊 Evaluation Architecture
+#  Evaluation Architecture
 
 ```mermaid
 flowchart LR
@@ -2045,7 +2045,7 @@ Each report stores information that allows the aggregate metrics to be traced ba
 
 ---
 
-# ⚠️ Evaluation Failures
+#  Evaluation Failures
 
 During evaluation, several generation requests received:
 
@@ -2122,7 +2122,7 @@ Where did the failure occur?
 
 ---
 
-# 🛠️ Debugging and Observability
+#  Debugging and Observability
 
 A RAG system is difficult to debug if its only output is:
 
@@ -2186,7 +2186,7 @@ Citation failure
 
 ---
 
-# 🛡️ Failure Isolation
+#  Failure Isolation
 
 One of the most important architectural lessons from this project is that the RAG pipeline should not have one giant failure domain.
 
@@ -2224,7 +2224,7 @@ This is why the architecture contains:
 
 ---
 
-# 🧪 Testing
+#  Testing
 
 Testing is part of the implementation rather than an afterthought.
 
@@ -2288,7 +2288,7 @@ Inspect results
 
 ---
 
-# 🐳 Docker
+#  Docker
 
 The application is deployed as separate frontend and backend services.
 
@@ -2395,7 +2395,7 @@ The current container startup can therefore be validated independently of the lo
 
 ---
 
-# 🔌 API Architecture
+# API Architecture
 
 The frontend is intentionally thin.
 
@@ -2437,7 +2437,7 @@ The frontend primarily handles:
 
 ---
 
-# 📁 Project Structure
+#  Project Structure
 
 ```text
 youtube-rag/
@@ -2527,7 +2527,7 @@ youtube-rag/
 
 ---
 
-# ⚙️ Configuration
+#  Configuration
 
 Important RAG decisions are configurable instead of being hardcoded into the pipeline.
 
@@ -2552,7 +2552,7 @@ This allows different retrieval configurations to be evaluated without redesigni
 
 ---
 
-# 🧠 Why I Did Not Hide the RAG Pipeline Behind a Large Framework
+#  Why I Did Not Hide the RAG Pipeline Behind a Large Framework
 
 One of the goals of this project was to understand the actual mechanics of RAG.
 
@@ -2592,7 +2592,7 @@ The project therefore treats RAG as an engineering pipeline rather than a single
 
 ---
 
-# 🔌 Component Boundaries
+#  Component Boundaries
 
 Important infrastructure components are abstracted behind interfaces.
 
@@ -2630,7 +2630,7 @@ A component can be changed without rewriting the entire application.
 
 ---
 
-# 🧰 Engineering Workflow
+#  Engineering Workflow
 
 The project was developed using a continuous engineering loop:
 
@@ -2687,7 +2687,7 @@ and deployed."
 
 ---
 
-# 🧱 Production-Oriented Characteristics
+#  Production-Oriented Characteristics
 
 This project is **production-oriented**, not production-scale.
 
@@ -2737,7 +2737,7 @@ Core infrastructure is abstracted behind interfaces.
 
 ---
 
-# 🖥️ Example Interaction
+#  Example Interaction
 
 ### User
 
@@ -2811,7 +2811,7 @@ Relevant sections:
 
 ---
 
-# 📄 Reproducibility
+#  Reproducibility
 
 ## Run tests
 
@@ -2869,7 +2869,7 @@ http://localhost:8501
 
 ---
 
-# 🧭 Project Philosophy
+#  Project Philosophy
 
 The central idea behind this project is:
 
@@ -2939,7 +2939,7 @@ start failing in real conditions?"
 
 ---
 
-# 💡 What I Learned Building This
+#  What I Learned Building This
 
 ## 1. Retrieval quality and generation quality are different problems
 
@@ -3082,7 +3082,7 @@ Deployable
 
 ---
 
-# 🚧 Known Limitations
+#  Known Limitations
 
 This system is production-oriented, not production-scale.
 
@@ -3280,7 +3280,7 @@ Citation-specific test cases
 
 ---
 
-# 🔐 Security and Configuration
+#  Security and Configuration
 
 Secrets should never be committed to the repository.
 
@@ -3321,7 +3321,7 @@ The Docker setup passes configuration into containers rather than baking secrets
 
 ---
 
-# 🏁 Final Architecture
+#  Final Architecture
 
 ```mermaid
 flowchart TB
@@ -3415,7 +3415,7 @@ flowchart TB
 
 ---
 
-# ⭐ The Point of the Project
+#  The Point of the Project
 
 This project started as:
 
@@ -3483,7 +3483,7 @@ That is the engineering problem this project explores.
 
 ---
 
-# 🚀 Built to Answer One Question
+#  Built to Answer One Question
 
 > **What does RAG look like when you stop treating it as a demo and start treating it as an engineering system?**
 
